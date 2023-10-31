@@ -1,10 +1,23 @@
 #!/usr/bin/env bash
-# Script that redirects the page of a site
+# Configure Nginx server so that /redirect_me is redirecting to another page.
 
 sudo apt-get update
 sudo apt-get install -y nginx
 
-echo "Hello World!" | sudo tee /var/www/html/index.html
-sudo sed 's#server_name _;#server_name _;\n\n\tlocation /redirect_me {\n\t\treturn 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n\t}#g' /etc/nginx/sites-available/default
+
+sudo sh -c 'echo "server {
+     listen      80 default_server;
+     listen      [::]:80 default_server;
+
+     location /redirect_me {
+         return 301 http://reuszed.com/;
+
+     }
+
+     root        /var/www/html;
+     index       index.html index.htm;
+}" > /etc/nginx/sites-available/default'
+
+sudo ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
 sudo service nginx restart
