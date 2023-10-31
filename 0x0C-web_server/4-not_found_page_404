@@ -1,4 +1,4 @@
-u#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Configure your Nginx server to have a custom 404 that containsceci n'est pas une page.
 
 
