@@ -1,39 +1,40 @@
 #!/usr/bin/env bash
-#Puppet script to install nginx
+# Configure server using puppet
 
-class nginx {
+# defines a Puppet class called nginx_server that 
+#  encapsulates the configuration for the Nginx server.
+class nginx_server {
   package { 'nginx':
     ensure => installed,
   }
 
+#  manages the Nginx service.
   service { 'nginx':
     ensure => running,
     enable => true,
+    require => Package['nginx'],
   }
-
-  file { '/var/www/html/index.html':
-    content => 'Hello World!',
-  }
-
+# manages the Nginx configuration file located at /etc/nginx/sites-available/default.
   file { '/etc/nginx/sites-available/default':
-    content => template('nginx/default.erb'),
-  }
+    ensure  => present,
+    content => "
+      server {
+        listen      80 default_server;
+        listen      [::]:80 default_server;
+        root        /var/www/html;
+        index       index.html index.htm;
 
-  file { '/etc/nginx/sites-enabled/default':
-    ensure => 'link',
-    target => '/etc/nginx/sites-available/default',
+        location / {
+          return 200 'Hello World!';
+        }
+
+        location /redirect_me {
+          return 301 http://cuberule.com/;
+        }
+      }
+    ",
+    notify => Service['nginx'],
   }
 }
-
-# Redirect /redirect_me to / using 301 Moved Permanently
-class redirect {
-  exec { 'create redirect rule':
-    command => '/bin/sed -i "s|location / {|location / {\n  return 301 /;\n}|" /etc/nginx/sites-available/default',
-    notify  => Service['nginx'],
-    require => File['/etc/nginx/sites-available/default'],
-  }
-}
-
-# Main class
-class { 'nginx': }
-class { 'redirect': }
+#  includes the nginx_server class, ensuring that it gets applied.
+include nginx_server
