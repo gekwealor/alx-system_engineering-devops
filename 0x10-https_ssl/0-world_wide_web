@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
-# Let’s also add other subdomains to make our life easy for us.
+# define a function to output the DNS record information for a given subdomain
 
-show_dig ()
-{
-    echo -n "The subdomain ""$2"
-    dig "$2"".""$1" +noall +answer | awk 'NF==5 {print " is a", $(NF-1), "record and points to", $NF}'
+function get_domain {
+
+	local subdomain=$1
+	local domain=$2
+	 local record=$(dig $subdomain.$domain | awk 'NR==14{print $0}')
+	local record_type=$(echo "$record" | awk '{print $4}')
+	local ip=$(echo "$record" | awk '{print $5}')
+	echo "The subdomain $subdomain is a $record_type record and points to $ip"
 }
-if [[ $2 ]]; then
-    show_dig "$1" "$2"
-elif [[ $1 ]]; then
-    for sub_d in 'www' 'lb-01' 'web-01' 'web-02'; do
-        show_dig "$1" "$sub_d"
-    done
+
+if [ $# -eq 2 ]; then
+	get_domain $2 $1
+else
+	get_domain "www" $1
+	get_domain "lb-01" $1
+	get_domain "web-01" $1
+	get_domain "web-02" $1
 fi
