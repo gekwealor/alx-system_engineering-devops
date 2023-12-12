@@ -1,45 +1,48 @@
 #!/usr/bin/python3
-"""
-   Searches through a list of words and check,
-   if they have appearance in Reddit hotlist
-"""
+""" Get all posts recursively and count words """
 
 import requests
 
 
-def count_words(subreddit, word_list, after=None, count_dict={}):
+def count_words(subreddit, word_list, after=None, word_counts=None):
+    """ Get all posts recursively and count words
+
+    Args:
+        subreddit (str): subreddit to search
+        word_list (list): words to search for
+        after (str, optional): pagination. Defaults to None.
+        word_counts (int, optional): word counts. Defaults to None.
     """
-       Takes a word_list and counts it's occurence in reddit,
-       returning a dictionary, incase_sensitive
-    """
-    try:
-        url = f'https://www.reddit.com/r/{subreddit}/hot.json'
-        header = {"User-Agent": "Chrome"}
-        params = {"limit": 100, "after": after}
-
-        response = requests.get(url, headers=header, params=params)
-        response.raise_for_status()
-
-        data = response.json()
-        posts = data["data"]["children"]
-
-        if not posts:
-            return None
-        for post in posts:
-            title = post["data"]["title"].lower()
-            for word in word_list:
-                if title.count(word.lower()) > 0:
-                    count_dict[word] = count_dict.get(word, 0) + \
-                            title.count(word.lower())
-
-        next_page = data["data"]["after"]
-        if next_page:
-            return count_words(subreddit, word_list, after=next_page,
-                               count_dict=count_dict)
-        else:
-            sorted_counts = sorted(count_dict.items(),
-                                   key=lambda x: (-x[1], x[0]))
-            for word, count in sorted_counts:
-                print(f"{word}: {count}")
-    except requests.exceptions.RequestException:
+    user_agent = 'Gina Ekwealor'
+    url = 'https://www.reddit.com/r/{}/hot.json'.format(subreddit)
+    headers = {'User-Agent': user_agent}
+    params = {'limit': 100}
+    # if there is an after, next page, add it to the params dict
+    if after:
+        params['after'] = after
+    response = requests.get(url, headers=headers,
+                            params=params, allow_redirects=False)
+    if response.status_code != 200:
         return None
+    # get all posts from the response
+    posts = response.json().get('data').get('children')
+    # initialize word_counts dict if it doesn't exist
+    word_counts = word_counts or {}
+    for post in posts:
+        title = post["data"]["title"]
+        for word in word_list:
+            if word.lower() in title.lower():
+                # get the value of the key, if it doesn't exist, return 0
+                word_counts[word.lower()] = word_counts.get(
+                    word.lower(), 0) + 1
+    after = response.json()["data"]["after"]
+    # if end of pagination and word_counts is empty, print nothing and return
+    if after is None:
+        if not word_counts:
+            return
+        # sort the word_counts dict by value in desc, then key in asc order
+        for key, value in sorted(word_counts.items(), key=lambda x: (-x[1],
+                                                                     x[0])):
+            print("{}: {}".format(key.lower(), value))
+        return
+    return count_words(subreddit, word_list, after, word_counts)
