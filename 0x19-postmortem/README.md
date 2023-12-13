@@ -13,6 +13,11 @@ Timeline:
 1:30 PM - Working closely with the payment gateway provider, the team developed and implemented a solution to rectify the issue.
 2:00 PM - The problem was successfully resolved, and users regained access to the checkout page.
 
+The primary cause was attributed to the new configuration applied to git data. Following the initiation of the rollout, this configuration led to a decline in the performance of fundamental git operations (such as pull and push requests). As a consequence of the internal framework, other services also experienced degradation, eventually resulting in a significant outage where 8 out of 10 services became unavailable.
+
+Attempts to roll back the changes proved unsuccessful due to constraints within the framework. A gradual failover mechanism was triggered, causing the system to transition to the backup. This resulted in the restoration of write operations, leading to a shift from a major outage to a state of degraded performance for the majority of services. Subsequent efforts were dedicated to restoring databases and recovering data for pull and push requests received during the outage.
+
+To address and mitigate future risks, internal processes are undergoing thorough review and adjustment. This proactive measure aims to ensure the safe deployment of any future changes. Additionally, a comprehensive investigation into the framework across services is underway to minimize the likelihood of multiple service failures.
 
 
 TASK 1
